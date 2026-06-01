@@ -1,4 +1,5 @@
 using System;
+using Blot.Bidding;
 using Blot.Cards;
 using Blot.Gameplay.Rules;
 using Blot.Players;
@@ -25,13 +26,13 @@ namespace Blot.Gameplay.Events
 
         // ---- bidding -------------------------------------------------------
         /// <summary>Fired when it is a player's turn to bid. UI shows bidding options.</summary>
-        public static event Action<Player>        OnBidRequested;
-        /// <summary>A player placed a bid. Suit? = null means Pass.</summary>
-        public static event Action<Player, Suit?> OnBidPlaced;
-        /// <summary>Bidding is over; trump has been decided.</summary>
-        public static event Action<Player, Suit>  OnBiddingComplete;
+        public static event Action<Player>       OnBidRequested;
+        /// <summary>A player placed a bid. Bid = null means Pass.</summary>
+        public static event Action<Player, Bid>  OnBidPlaced;
+        /// <summary>Bidding is over; contract has been decided.</summary>
+        public static event Action<Player, Bid>  OnBiddingComplete;
         /// <summary>All players passed — round will be redealt.</summary>
-        public static event Action                OnBiddingAllPassed;
+        public static event Action               OnBiddingAllPassed;
 
         // ---- Belote / Rebelote --------------------------------------------
         public static event Action<Player, BeloteEvent> OnBeloteAnnounced;
@@ -47,8 +48,8 @@ namespace Blot.Gameplay.Events
         public static void GameRestarted()                       => OnGameRestarted?.Invoke();
 
         public static void BidRequested(Player p)                => OnBidRequested?.Invoke(p);
-        public static void BidPlaced(Player p, Suit? bid)        => OnBidPlaced?.Invoke(p, bid);
-        public static void BiddingComplete(Player p, Suit trump) => OnBiddingComplete?.Invoke(p, trump);
+        public static void BidPlaced(Player p, Bid bid)          => OnBidPlaced?.Invoke(p, bid);
+        public static void BiddingComplete(Player p, Bid bid)    => OnBiddingComplete?.Invoke(p, bid);
         public static void BiddingAllPassed()                    => OnBiddingAllPassed?.Invoke();
         public static void BeloteAnnounced(Player p, BeloteEvent e) => OnBeloteAnnounced?.Invoke(p, e);
     }

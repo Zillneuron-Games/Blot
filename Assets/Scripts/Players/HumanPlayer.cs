@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Blot.Bidding;
 using Blot.Cards;
 using Blot.Gameplay;
 
@@ -22,14 +23,18 @@ namespace Blot.Players
         // ---- bidding -------------------------------------------------------
         /// <summary>
         /// UI subscribes here to show the bidding panel.
+        /// Provides the minimum valid bid value.
         /// Call <see cref="TryPlaceBid"/> when the player makes a choice.
         /// </summary>
-        public event Action OnBidRequested;
+        public event Action<int> OnBidRequested;
 
         private bool _waitingForBid;
 
+        /// <summary>The minimum bid value accepted this turn (set by BiddingState).</summary>
+        public int MinimumBid { get; private set; }
+
         /// <summary>
-        /// When true (default) the player auto-bids randomly if no UI handler is wired.
+        /// When true the player auto-bids randomly if no UI handler is wired.
         /// Set to false once a proper bidding UI is connected.
         /// </summary>
         public bool AutoBidFallback { get; set; } = true;
@@ -68,18 +73,18 @@ namespace Blot.Players
 
         // ------------------------------------------------------------------ bidding
 
-        public override void RequestBid()
+        public override void RequestBid(int minimumBid)
         {
+            MinimumBid     = minimumBid;
             _waitingForBid = true;
-            OnBidRequested?.Invoke();       // UI hook — show the bidding panel
+            OnBidRequested?.Invoke(minimumBid);
 
             if (AutoBidFallback)
             {
-                // Temporary fallback: random bid until bidding UI is implemented.
-                // 50 % chance to bid a random suit, 50 % to pass.
-                Suit? bid = UnityEngine.Random.value > 0.5f
-                    ? (Suit?)null
-                    : (Suit)UnityEngine.Random.Range(0, 4);
+                // Temporary fallback until bidding UI is connected.
+                Bid bid = UnityEngine.Random.value > 0.5f
+                    ? null
+                    : new Bid(minimumBid, (Suit)UnityEngine.Random.Range(0, 5));
                 TryPlaceBid(bid);
             }
         }
@@ -89,7 +94,7 @@ namespace Blot.Players
         /// <paramref name="bid"/> null = Pass.
         /// Returns false if it is not currently this player's bid turn.
         /// </summary>
-        public bool TryPlaceBid(Suit? bid)
+        public bool TryPlaceBid(Bid bid)
         {
             if (!_waitingForBid) return false;
             _waitingForBid = false;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Blot.Bidding;
 using Blot.Cards;
 using Blot.Gameplay;
 using Blot.Players;
@@ -49,14 +50,22 @@ namespace Blot.AI
 
         // ------------------------------------------------------------------ bidding
 
-        public override void RequestBid()
+        public override void RequestBid(int minimumBid)
         {
-            // 50 % pass — 50 % bid a random suit
-            Suit? bid = _rng.Next(0, 2) == 0
-                ? (Suit?)null
-                : (Suit)_rng.Next(0, 4);
+            // No prior bid: 50 % pass, 50 % bid minimum.
+            // Prior bid exists: 80 % pass, 20 % raise by exactly 1.
+            bool noBidYet = minimumBid == 8;
+            bool shouldBid = noBidYet ? _rng.Next(0, 2) == 0 : _rng.Next(0, 5) == 0;
 
-            CommitBid(bid);
+            if (!shouldBid)
+            {
+                CommitBid(null);
+                return;
+            }
+
+            // Pick a random suit including NoTrump (indices 0–4).
+            var suit = (Suit)_rng.Next(0, 5);
+            CommitBid(new Bid(minimumBid, suit));
         }
     }
 }

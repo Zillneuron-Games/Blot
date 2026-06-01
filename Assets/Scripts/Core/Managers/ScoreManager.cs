@@ -28,36 +28,33 @@ namespace Blot.Core.Managers
         /// Applies the contract rule and moves round scores into match totals.
         ///
         /// Contract rule:
-        ///   • If <paramref name="biddingTeam"/> scored MORE points than the defending team
+        ///   • If the bidding team scored >= <paramref name="contractTargetPoints"/>
         ///     → both teams add their earned round points to their match totals.
-        ///   • If bidding team FAILED (scored ≤ defending team)
+        ///   • If the bidding team FAILED (scored &lt; contractTargetPoints)
         ///     → defending team receives ALL round points; bidding team gets 0.
         ///
         /// Belote/Rebelote bonuses and last-trick bonus must be added via
         /// <see cref="AddTrickPoints"/> BEFORE calling this method.
         /// </summary>
-        public RoundResult FinalizeRound(TeamId biddingTeam)
+        public RoundResult FinalizeRound(TeamId biddingTeam, int contractBidValue, int contractTargetPoints)
         {
             int aRound = _roundScores[(int)TeamId.TeamA];
             int bRound = _roundScores[(int)TeamId.TeamB];
 
             TeamId defenderTeam  = biddingTeam == TeamId.TeamA ? TeamId.TeamB : TeamId.TeamA;
             int    bidderScore   = _roundScores[(int)biddingTeam];
-            int    defenderScore = _roundScores[(int)defenderTeam];
 
-            bool contractMet = bidderScore > defenderScore;
+            bool contractMet = bidderScore >= contractTargetPoints;
             TeamId roundWinner;
 
             if (contractMet)
             {
-                // Both teams earn what they scored.
                 _matchScores[(int)TeamId.TeamA] += aRound;
                 _matchScores[(int)TeamId.TeamB] += bRound;
                 roundWinner = biddingTeam;
             }
             else
             {
-                // Defending team takes everything; bidder gets nothing.
                 int total = aRound + bRound;
                 _matchScores[(int)defenderTeam] += total;
                 roundWinner = defenderTeam;
@@ -65,6 +62,7 @@ namespace Blot.Core.Managers
 
             return new RoundResult(
                 roundWinner, biddingTeam, contractMet,
+                contractBidValue, contractTargetPoints, bidderScore,
                 aRound, bRound,
                 _matchScores[(int)TeamId.TeamA],
                 _matchScores[(int)TeamId.TeamB]);

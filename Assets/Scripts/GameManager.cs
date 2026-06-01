@@ -1,3 +1,4 @@
+using Blot.Bidding;
 using Blot.Cards;
 using Blot.Core.Managers;
 using Blot.Core.StateMachine;
@@ -82,13 +83,15 @@ namespace Blot
         /// Only works while the game is in the Bidding state.
         /// </summary>
         [ContextMenu("Debug: Bid Clubs")]
-        public void DebugBidClubs()    => MatchManager.GetHumanPlayer().TryPlaceBid(Suit.Clubs);
+        public void DebugBidClubs()    { var h = MatchManager.GetHumanPlayer(); h.TryPlaceBid(new Bid(h.MinimumBid, Suit.Clubs)); }
         [ContextMenu("Debug: Bid Diamonds")]
-        public void DebugBidDiamonds() => MatchManager.GetHumanPlayer().TryPlaceBid(Suit.Diamonds);
+        public void DebugBidDiamonds() { var h = MatchManager.GetHumanPlayer(); h.TryPlaceBid(new Bid(h.MinimumBid, Suit.Diamonds)); }
         [ContextMenu("Debug: Bid Hearts")]
-        public void DebugBidHearts()   => MatchManager.GetHumanPlayer().TryPlaceBid(Suit.Hearts);
+        public void DebugBidHearts()   { var h = MatchManager.GetHumanPlayer(); h.TryPlaceBid(new Bid(h.MinimumBid, Suit.Hearts)); }
         [ContextMenu("Debug: Bid Spades")]
-        public void DebugBidSpades()   => MatchManager.GetHumanPlayer().TryPlaceBid(Suit.Spades);
+        public void DebugBidSpades()   { var h = MatchManager.GetHumanPlayer(); h.TryPlaceBid(new Bid(h.MinimumBid, Suit.Spades)); }
+        [ContextMenu("Debug: Bid NoTrump")]
+        public void DebugBidNoTrump()  { var h = MatchManager.GetHumanPlayer(); h.TryPlaceBid(new Bid(h.MinimumBid, Suit.NoTrump)); }
         [ContextMenu("Debug: Pass Bid")]
         public void DebugPassBid()     => MatchManager.GetHumanPlayer().TryPlaceBid(null);
 

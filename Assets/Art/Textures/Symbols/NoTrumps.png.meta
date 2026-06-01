@@ -1,12 +1,5 @@
 fileFormatVersion: 2
-guid: b4a69882d65414d728bbf43430630a01
-AssetOrigin:
-  serializedVersion: 1
-  productId: 328456
-  packageName: Funny Vintage Playing Card Pack
-  packageVersion: 1.1
-  assetPath: Assets/Vintage Card set/Symbols/icon_Spade.png
-  uploadId: 777485
+guid: 03effe8ae6e06004c87eedb8e93905de
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}

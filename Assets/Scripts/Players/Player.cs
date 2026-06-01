@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Blot.Bidding;
 using Blot.Cards;
 using Blot.Gameplay;
 using Blot.Gameplay.Rules;
@@ -22,7 +23,7 @@ namespace Blot.Players
         public event Action<Card> OnCardChosen;
 
         /// <summary>Fires when the player submits a bid. null = Pass.</summary>
-        public event Action<Suit?> OnBidChosen;
+        public event Action<Bid> OnBidChosen;
 
         protected Player(int id, string name, TeamId team)
         {
@@ -57,11 +58,13 @@ namespace Blot.Players
         // ---- bidding -------------------------------------------------------
         /// <summary>
         /// Called by BiddingState when it is this player's turn to bid.
-        /// Implementations fire <see cref="OnBidChosen"/> (null = Pass, Suit = bid).
+        /// <paramref name="minimumBid"/> is 8 if no bids have been placed, or
+        /// currentHighestBid + 1 otherwise.
+        /// Implementations fire <see cref="OnBidChosen"/> (null = Pass, Bid = bid).
         /// </summary>
-        public abstract void RequestBid();
+        public abstract void RequestBid(int minimumBid);
 
-        /// <summary>Broadcasts the bid and clears waiting state.</summary>
-        protected void CommitBid(Suit? bid) => OnBidChosen?.Invoke(bid);
+        /// <summary>Broadcasts the bid and clears waiting state. null = Pass.</summary>
+        protected void CommitBid(Bid bid) => OnBidChosen?.Invoke(bid);
     }
 }

@@ -1,6 +1,6 @@
 namespace Blot.Cards
 {
-    public enum Suit { Clubs, Diamonds, Hearts, Spades }
+    public enum Suit { Clubs, Diamonds, Hearts, Spades, NoTrump }
 
     // Declared in a neutral order; actual game ranking is resolved in GetTrumpStrength / GetNonTrumpStrength
     public enum Rank { Seven, Eight, Nine, Ten, Jack, Queen, King, Ace }
