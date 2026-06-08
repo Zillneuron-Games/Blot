@@ -143,6 +143,15 @@ namespace Blot.Players
             _waitingForDeclare = true;
 
             var available = DeclarationDetector.FindAll(Hand);
+
+            // No declarations in hand — skip the UI entirely and auto-commit nothing.
+            if (available.Count == 0)
+            {
+                UnityEngine.Debug.Log("[Declarations] Human has no declarations, skipping declaration UI");
+                TryAnnounce(new List<Declaration>());
+                return;
+            }
+
             OnDeclareRequested?.Invoke(available);
 
             if (AutoDeclareFallback)

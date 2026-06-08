@@ -106,6 +106,14 @@ namespace Blot.UI
 
         private void HandleDeclareRequested(List<Declaration> available)
         {
+            // Guard: if no declarations are available, skip the panel entirely.
+            if (available == null || available.Count == 0)
+            {
+                Debug.Log("[Declarations] Human has no declarations, skipping declaration UI");
+                _human.TryAnnounce(new List<Declaration>());
+                return;
+            }
+
             _available = available;
             _selected.Clear();
 

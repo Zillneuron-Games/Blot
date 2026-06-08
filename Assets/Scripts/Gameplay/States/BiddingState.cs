@@ -59,7 +59,9 @@ namespace Blot.Gameplay.States
         private Player _currentBidder;
         private int    _consecutivePasses;
 
-        private Player _challengePlayer;   // set when a challenge is issued
+        private Player       _challengePlayer;    // set when a challenge is issued
+        private List<Player> _contractResponders; // both contract-team players, asked in order
+        private int          _responderIndex;     // which responder we are currently asking
 
         // ==================================================================
         public void Enter(GameContext ctx)
@@ -215,32 +217,65 @@ namespace Blot.Gameplay.States
 
         private void HandleChallenge(Player challenger)
         {
-            _challengePlayer = challenger;
+            _challengePlayer   = challenger;
+            _responderIndex    = 0;
+
+            // Both contract-team members respond: bidder first, then their teammate.
+            _contractResponders = new List<Player>(2);
+            _contractResponders.Add(_currentBidder);
+            foreach (var p in _ctx.MatchManager.Players)
+                if (p.Team == _currentBidder.Team && p != _currentBidder)
+                    _contractResponders.Add(p);
 
             Debug.Log($"[Challenge] Player{challenger.Id} ({challenger.Name}) " +
                       $"says 'I Don't Believe!' against {_currentBidder.Name}'s {_currentBid}");
 
             GameEvents.Challenged(challenger);
 
-            // Pause so the challenge message is visible, then ask contract owner.
-            Advance(BiddingDelay, () =>
+            Advance(BiddingDelay, AskNextSureResponder);
+        }
+
+        /// <summary>
+        /// Asks the next contract-team member for a sure response.
+        /// Calls FinishBidding once all have answered or as soon as one says "I'm Sure".
+        /// </summary>
+        private void AskNextSureResponder()
+        {
+            if (_responderIndex >= _contractResponders.Count)
             {
-                _currentBidder.OnSureResponse += HandleSureResponse;
-                _currentBidder.RequestSureResponse();
-            });
+                // All members passed — challenge is confirmed as uncountered.
+                Debug.Log("[Challenge Complete] All contract-team members passed — not confirmed");
+                Advance(BiddingDelay, () => FinishBidding(_challengePlayer, isSure: false));
+                return;
+            }
+
+            var player = _contractResponders[_responderIndex];
+            Debug.Log($"[Challenge] Asking Player{player.Id} ({player.Name}) to respond...");
+            player.OnSureResponse += HandleSureResponse;
+            player.RequestSureResponse();
         }
 
         private void HandleSureResponse(bool isSure)
         {
-            _currentBidder.OnSureResponse -= HandleSureResponse;
+            var player = _contractResponders[_responderIndex];
+            player.OnSureResponse -= HandleSureResponse;
 
-            Debug.Log($"[Challenge Response] Player{_currentBidder.Id} ({_currentBidder.Name}): " +
-                      $"{(isSure ? "I'm Sure!" : "Pass (no confirmation)")}");
+            Debug.Log($"[Challenge Response] Player{player.Id} ({player.Name}): " +
+                      $"{(isSure ? "I'm Sure!" : "Pass")}");
 
-            GameEvents.ChallengeResponded(_currentBidder, isSure);
+            GameEvents.ChallengeResponded(player, isSure);
 
-            // Pause so the response is visible, then wrap up.
-            Advance(BiddingDelay, () => FinishBidding(_challengePlayer, isSure));
+            if (isSure)
+            {
+                // Contract confirmed — stop asking further teammates.
+                Debug.Log("[Challenge Complete] SureConfirmed = true");
+                Advance(BiddingDelay, () => FinishBidding(_challengePlayer, isSure: true));
+                return;
+            }
+
+            // This player passed — ask the next teammate.
+            _responderIndex++;
+            Advance(BiddingDelay, AskNextSureResponder);
         }
 
         // ==================================================================

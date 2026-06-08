@@ -16,6 +16,8 @@ namespace Blot.Gameplay.States
             var rm = ctx.RoundManager;
             var dm = ctx.DeclarationManager;
 
+            Debug.Log("[Round Result] Round ended");
+
             // ---- 1. Declaration bonuses ------------------------------------
             // Must be added BEFORE FinalizeRound so they are included in the
             // contract-success check and potential redistribution.
@@ -147,6 +149,8 @@ namespace Blot.Gameplay.States
 
         private static void AdvanceToNextRound(GameContext ctx)
         {
+            Debug.Log("[Round Result] Starting next round");
+
             var rm = ctx.RoundManager;
             rm.AdvanceRoundStarter();
 

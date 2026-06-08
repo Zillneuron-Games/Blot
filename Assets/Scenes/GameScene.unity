@@ -287,7 +287,7 @@ RectTransform:
   m_Children:
   - {fileID: 1971165752}
   - {fileID: 1019643865}
-  m_Father: {fileID: 183924232}
+  m_Father: {fileID: 1050135810}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -363,7 +363,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1001097685}
-  - {fileID: 79790017}
   - {fileID: 522603624}
   m_Father: {fileID: 1436344192}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5636,6 +5635,7 @@ RectTransform:
   - {fileID: 496435433}
   - {fileID: 1847223747}
   - {fileID: 1142453040}
+  - {fileID: 2005142801}
   - {fileID: 1583444819}
   - {fileID: 1552005027}
   - {fileID: 1402917847}
@@ -5646,6 +5646,7 @@ RectTransform:
   - {fileID: 1687425517}
   - {fileID: 1611409150}
   - {fileID: 1127788377}
+  - {fileID: 79790017}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -7293,7 +7294,6 @@ GameObject:
   - component: {fileID: 1436344192}
   - component: {fileID: 1436344195}
   - component: {fileID: 1436344194}
-  - component: {fileID: 1436344193}
   m_Layer: 0
   m_Name: BiddingPanel
   m_TagString: Untagged
@@ -7321,49 +7321,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1436344193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1436344191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83d6197f83410294cb3bb36dd2c7be42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _biddingPanel: {fileID: 1436344191}
-  _normalBidSubPanel: {fileID: 522603623}
-  _bidValueLabel: {fileID: 392865825}
-  _decreaseButton: {fileID: 1648319616}
-  _increaseButton: {fileID: 1045414385}
-  _suitButtons:
-  - {fileID: 1311824706}
-  - {fileID: 300112687}
-  - {fileID: 1074018383}
-  - {fileID: 678901712}
-  - {fileID: 213546721}
-  _passButton: {fileID: 1928847274}
-  _confirmButton: {fileID: 1662686680}
-  _challengeButton: {fileID: 675694574}
-  _kaputButton: {fileID: 1253287533}
-  _kaputSubPanel: {fileID: 1001097684}
-  _kaputModeLabel: {fileID: 1588608506}
-  _kaputExtraLabel: {fileID: 355737407}
-  _kaputExtraDecButton: {fileID: 1991219916}
-  _kaputExtraIncButton: {fileID: 1471385486}
-  _sureResponsePanel: {fileID: 79790016}
-  _sureButton: {fileID: 1971165753}
-  _surePassButton: {fileID: 1019643866}
-  _currentBidLabel: {fileID: 1944229766}
-  _currentBidderLabel: {fileID: 910181702}
-  _challengeStatusLabel: {fileID: 1475902052}
-  _playerBidLabels:
-  - {fileID: 596774679}
-  - {fileID: 1953538627}
-  - {fileID: 833298368}
-  - {fileID: 1817175345}
 --- !u!114 &1436344194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10048,7 +10005,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1817175343}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -11034,7 +10991,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1953538625}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -11386,6 +11343,94 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1991219914}
+  m_CullTransparentMesh: 1
+--- !u!1 &2005142800
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2005142801}
+  - component: {fileID: 2005142803}
+  - component: {fileID: 2005142802}
+  m_Layer: 0
+  m_Name: BiddingPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2005142801
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2005142800}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1050135810}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2005142802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2005142800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83d6197f83410294cb3bb36dd2c7be42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _biddingPanel: {fileID: 1436344191}
+  _normalBidSubPanel: {fileID: 522603623}
+  _bidValueLabel: {fileID: 392865825}
+  _decreaseButton: {fileID: 1648319616}
+  _increaseButton: {fileID: 1045414385}
+  _suitButtons:
+  - {fileID: 1311824706}
+  - {fileID: 300112687}
+  - {fileID: 1074018383}
+  - {fileID: 678901712}
+  - {fileID: 213546721}
+  _passButton: {fileID: 1928847274}
+  _confirmButton: {fileID: 1662686680}
+  _challengeButton: {fileID: 675694574}
+  _kaputButton: {fileID: 1253287533}
+  _kaputSubPanel: {fileID: 1001097684}
+  _kaputModeLabel: {fileID: 1588608506}
+  _kaputExtraLabel: {fileID: 355737407}
+  _kaputExtraDecButton: {fileID: 1991219916}
+  _kaputExtraIncButton: {fileID: 1471385486}
+  _sureResponsePanel: {fileID: 79790016}
+  _sureButton: {fileID: 1971165753}
+  _surePassButton: {fileID: 1019643866}
+  _currentBidLabel: {fileID: 1944229766}
+  _currentBidderLabel: {fileID: 910181702}
+  _challengeStatusLabel: {fileID: 1475902052}
+  _playerBidLabels:
+  - {fileID: 596774679}
+  - {fileID: 1953538627}
+  - {fileID: 833298368}
+  - {fileID: 1817175345}
+--- !u!222 &2005142803
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2005142800}
   m_CullTransparentMesh: 1
 --- !u!1 &2019151515
 GameObject:

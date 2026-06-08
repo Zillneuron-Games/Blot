@@ -120,13 +120,19 @@ namespace Blot.UI
         /// </summary>
         public void ShowRoundResult(RoundEndData data, Action onContinue)
         {
-            if (_roundResultPanel != null)
+            // Use the Inspector-assigned reference; fall back to scene lookup if null.
+            var panel = _roundResultPanel != null
+                ? _roundResultPanel
+                : FindFirstObjectByType<RoundResultPanel>(FindObjectsInactive.Include);
+
+            if (panel != null)
             {
-                _roundResultPanel.Show(data, onContinue);
+                Debug.Log("[Round Result] Showing panel");
+                panel.Show(data, onContinue);
             }
             else
             {
-                Debug.LogWarning("[Round Result] No RoundResultPanel assigned — skipping.");
+                Debug.LogWarning("[Round Result] No RoundResultPanel found in scene — skipping.");
                 RunAfterDelay(0f, onContinue);
             }
         }
