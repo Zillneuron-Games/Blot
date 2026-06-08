@@ -4,8 +4,10 @@ namespace Blot.Core.StateMachine
     {
         GameStart,
         DealCards,
-        SelectTrump,   // kept for backward-compat; replaced in flow by Bidding
+        SelectTrump,          // kept for backward-compat; replaced in flow by Bidding
         Bidding,
+        AnnounceDeclarations, // new: players announce declarations after bidding
+        RevealDeclarations,   // new: winning team (trick 2) / opponent (trick 3) reveal
         PlayTrick,
         EvaluateTrick,
         CheckRoundEnd,

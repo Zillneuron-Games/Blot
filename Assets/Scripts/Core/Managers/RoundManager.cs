@@ -70,17 +70,57 @@ namespace Blot.Core.Managers
         /// <summary>Team of the bidder; defaults to TeamA if not set.</summary>
         public TeamId BiddingTeam => BiddingPlayer?.Team ?? TeamId.TeamA;
 
-        /// <summary>Bid value (e.g. 10). ContractTargetPoints = ContractBidValue * 10.</summary>
+        /// <summary>
+        /// Effective bid value (e.g. 10 for normal, 25+ for Kaput).
+        /// Used for challenge-bonus calculation and scoring award.
+        /// </summary>
         public int ContractBidValue     { get; private set; }
 
-        /// <summary>Points the bidding team must reach to succeed (ContractBidValue * 10).</summary>
+        /// <summary>
+        /// ContractBidValue × 10. Added to the contract team's raw award on success,
+        /// or to the defender's raw award on failure.
+        /// For Kaput contracts, the win condition is trick-based, not points-based.
+        /// </summary>
         public int ContractTargetPoints { get; private set; }
+
+        // ---- challenge state ("I Don't Believe" / "I'm Sure") --------------
+        /// <summary>True if an opponent challenged the contract during bidding.</summary>
+        public bool   IsChallengeActive       { get; private set; }
+        /// <summary>The player who issued the challenge.</summary>
+        public Player ChallengePlayer         { get; private set; }
+        /// <summary>Team of the challenger.</summary>
+        public TeamId ChallengeTeam           { get; private set; }
+        /// <summary>True if the contract team responded "I'm Sure".</summary>
+        public bool   IsSureConfirmed         { get; private set; }
+        /// <summary>
+        /// Multiplier for the challenge bonus:
+        ///   0 = no challenge active
+        ///   1 = challenged only ("I Don't Believe")
+        ///   3 = challenged + confirmed ("I Don't Believe" + "I'm Sure")
+        /// Applied to ContractBidValue → extra match points for the round winner.
+        /// </summary>
+        public int    ChallengeBonusMultiplier { get; private set; }
 
         /// <summary>Winner of trick 8 (used for the last-trick +10 bonus).</summary>
         public Player LastTrickWinner { get; private set; }
 
         /// <summary>Tracks Belote / Rebelote state for the current round.</summary>
         public BeloteTracker BeloteTracker { get; private set; }
+
+        // ---- Kaput contract state -----------------------------------------
+        /// <summary>True if the current contract is a declared Kaput contract.</summary>
+        public bool IsKaputContract  { get; private set; }
+        /// <summary>Additional bonus value declared on top of the base Kaput value of 25.</summary>
+        public int  KaputExtraValue  { get; private set; }
+
+        // ---- Per-team trick tracking --------------------------------------
+        private readonly int[] _tricksWonByTeam = new int[2];
+
+        /// <summary>Returns the number of tricks won by the specified team this round.</summary>
+        public int GetTricksWon(TeamId team) => _tricksWonByTeam[(int)team];
+
+        /// <summary>Returns true if the specified team won all 8 tricks this round.</summary>
+        public bool DidTeamWinAllTricks(TeamId team) => _tricksWonByTeam[(int)team] == 8;
 
         // ==================================================================
         // Private
@@ -157,20 +197,33 @@ namespace Blot.Core.Managers
         /// </summary>
         /// <param name="trump">Trump suit chosen during bidding.</param>
         /// <param name="bidder">Player who won the bid (may be null).</param>
-        public void StartRound(Suit trump, Player bidder = null, int bidValue = 0)
+        /// <param name="bidValue">Effective bid value (EffectiveBidValue of the winning Bid).</param>
+        /// <param name="isKaput">True if the contract is a declared Kaput.</param>
+        /// <param name="kaputExtra">KaputExtraValue of the bid (0 if not Kaput).</param>
+        public void StartRound(Suit trump, Player bidder = null, int bidValue = 0,
+                               bool isKaput = false, int kaputExtra = 0)
         {
-            Trump                = trump;
-            TricksPlayed         = 0;
-            CurrentTrickIndex    = 0;    // incremented to 1 inside BeginNewTrick
-            LeadPlayerIndex      = RoundStarterIndex;   // Round Starter leads trick 1
-            BiddingPlayer        = bidder;
-            ContractBidValue     = bidValue;
-            ContractTargetPoints = bidValue * 10;
-            LastTrickWinner      = null;
-            CurrentTrickWinner   = null;
-            CurrentActivePlayer  = null;
+            Trump                  = trump;
+            TricksPlayed           = 0;
+            CurrentTrickIndex      = 0;
+            LeadPlayerIndex        = RoundStarterIndex;
+            BiddingPlayer          = bidder;
+            ContractBidValue       = bidValue;
+            ContractTargetPoints   = bidValue * 10;   // used for scoring award; win condition may be overridden for Kaput
+            IsKaputContract        = isKaput;
+            KaputExtraValue        = kaputExtra;
+            _tricksWonByTeam[0]    = 0;
+            _tricksWonByTeam[1]    = 0;
+            LastTrickWinner        = null;
+            CurrentTrickWinner     = null;
+            CurrentActivePlayer    = null;
+            // Reset challenge state (SetChallengeState is called AFTER this if needed).
+            IsChallengeActive        = false;
+            ChallengePlayer          = null;
+            IsSureConfirmed          = false;
+            ChallengeBonusMultiplier = 0;
             CurrentRoundIndex++;
-            BeloteTracker        = new BeloteTracker(trump, _players);
+            BeloteTracker          = new BeloteTracker(trump, _players);
 
             Debug.Log($"[Round {CurrentRoundIndex} Start] " +
                       $"Starter = Player{CurrentRoundStarter.Id} ({CurrentRoundStarter.Name}) | " +
@@ -230,6 +283,7 @@ namespace Blot.Core.Managers
             CurrentTrickWinner = winner;
             TricksPlayed++;
             LeadPlayerIndex    = Array.IndexOf(_players, winner);
+            _tricksWonByTeam[(int)winner.Team]++;
 
             Debug.Log($"[Trick {CurrentTrickIndex} End] " +
                       $"Winner = Player{winner.Id} ({winner.Name}) | " +
@@ -245,6 +299,26 @@ namespace Blot.Core.Managers
         // ==================================================================
         // StartRound / EndTrick / EndRound aliases for naming clarity
         // ==================================================================
+
+        // ==================================================================
+        // Challenge state
+        // ==================================================================
+
+        /// <summary>
+        /// Records that a challenge occurred during this round's bidding.
+        /// Must be called AFTER <see cref="StartRound"/> (which resets challenge state).
+        /// </summary>
+        public void SetChallengeState(Player challenger, bool isSureConfirmed)
+        {
+            IsChallengeActive        = true;
+            ChallengePlayer          = challenger;
+            ChallengeTeam            = challenger.Team;
+            IsSureConfirmed          = isSureConfirmed;
+            ChallengeBonusMultiplier = isSureConfirmed ? 3 : 1;
+
+            Debug.Log($"[Challenge State] Challenger = Player{challenger.Id} ({challenger.Name}) | " +
+                      $"I'm Sure = {isSureConfirmed} | Multiplier = {ChallengeBonusMultiplier}");
+        }
 
         /// <summary>Alias: starts a round (identical to <see cref="StartRound"/>).</summary>
         public void StartTrick(Player leader)

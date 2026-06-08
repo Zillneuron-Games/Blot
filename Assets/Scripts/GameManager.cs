@@ -2,6 +2,7 @@ using Blot.Bidding;
 using Blot.Cards;
 using Blot.Core.Managers;
 using Blot.Core.StateMachine;
+using Blot.Declarations;
 using Blot.Gameplay.Events;
 using Blot.Gameplay.States;
 using UnityEngine;
@@ -18,10 +19,11 @@ namespace Blot
         [Header("Debug")]
         [SerializeField] private bool _logStateTransitions = true;
 
-        public MatchManager     MatchManager { get; private set; }
-        public RoundManager     RoundManager { get; private set; }
-        public ScoreManager     ScoreManager { get; private set; }
-        public GameStateMachine StateMachine { get; private set; }
+        public MatchManager        MatchManager        { get; private set; }
+        public RoundManager        RoundManager        { get; private set; }
+        public ScoreManager        ScoreManager        { get; private set; }
+        public DeclarationManager  DeclarationManager  { get; private set; }
+        public GameStateMachine    StateMachine        { get; private set; }
 
         public static GameManager Instance { get; private set; }
 
@@ -32,16 +34,12 @@ namespace Blot
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
 
-            // Build managers and FSM in Awake so they exist before any other
-            // component's Start() runs (AIHandView, GameUIManager, etc.).
             BuildManagers();
             BuildStateMachine();
         }
 
         private void Start()
         {
-            // Fire the FSM after all other Start() subscriptions are in place.
-            // Script Execution Order is set to 100 (runs last) by BuildGameScene.
             StateMachine.Start(GameStateId.GameStart);
         }
 
@@ -49,22 +47,26 @@ namespace Blot
 
         private void BuildManagers()
         {
-            MatchManager = new MatchManager();
-            RoundManager = new RoundManager(MatchManager.Players);
-            ScoreManager = new ScoreManager();
+            MatchManager       = new MatchManager();
+            RoundManager       = new RoundManager(MatchManager.Players);
+            ScoreManager       = new ScoreManager();
+            DeclarationManager = new DeclarationManager();
         }
 
         private void BuildStateMachine()
         {
             StateMachine = new GameStateMachine();
 
-            var context = new GameContext(MatchManager, RoundManager, ScoreManager, StateMachine);
+            var context = new GameContext(
+                MatchManager, RoundManager, ScoreManager, StateMachine, DeclarationManager);
             StateMachine.Initialize(context);
 
             StateMachine.RegisterState(new GameStartState());
             StateMachine.RegisterState(new DealCardsState());
-            StateMachine.RegisterState(new SelectTrumpState()); // kept; no longer reached in normal flow
+            StateMachine.RegisterState(new SelectTrumpState());          // legacy; not reached in normal flow
             StateMachine.RegisterState(new BiddingState());
+            StateMachine.RegisterState(new AnnounceDeclarationsState()); // new
+            StateMachine.RegisterState(new RevealDeclarationsState());   // new
             StateMachine.RegisterState(new PlayTrickState());
             StateMachine.RegisterState(new EvaluateTrickState());
             StateMachine.RegisterState(new CheckRoundEndState());
@@ -73,15 +75,8 @@ namespace Blot
             StateMachine.RegisterState(new MatchEndState());
         }
 
-        // ------------------------------------------------------------------ public API
-
         // ------------------------------------------------------------------ debug helpers
 
-        /// <summary>
-        /// Force the human player to bid the specified suit.
-        /// Use via the Inspector context menu or a UI debug button.
-        /// Only works while the game is in the Bidding state.
-        /// </summary>
         [ContextMenu("Debug: Bid Clubs")]
         public void DebugBidClubs()    { var h = MatchManager.GetHumanPlayer(); h.TryPlaceBid(new Bid(h.MinimumBid, Suit.Clubs)); }
         [ContextMenu("Debug: Bid Diamonds")]
@@ -97,14 +92,14 @@ namespace Blot
 
         // ------------------------------------------------------------------ match API
 
-        /// <summary>Called by the UI restart button after a match ends.</summary>
         public void RestartMatch()
         {
-            // Replace managers so all scores reset cleanly
-            ScoreManager = new ScoreManager();
-            RoundManager = new RoundManager(MatchManager.Players);
+            ScoreManager       = new ScoreManager();
+            RoundManager       = new RoundManager(MatchManager.Players);
+            DeclarationManager = new DeclarationManager();
 
-            var context = new GameContext(MatchManager, RoundManager, ScoreManager, StateMachine);
+            var context = new GameContext(
+                MatchManager, RoundManager, ScoreManager, StateMachine, DeclarationManager);
             StateMachine.Initialize(context);
 
             GameEvents.GameRestarted();

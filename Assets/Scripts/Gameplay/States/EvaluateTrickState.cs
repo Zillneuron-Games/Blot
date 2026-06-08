@@ -1,5 +1,8 @@
+using System;
 using Blot.Core.StateMachine;
 using Blot.Gameplay.Events;
+using Blot.UI;
+using UnityEngine;
 
 namespace Blot.Gameplay.States
 {
@@ -21,9 +24,27 @@ namespace Blot.Gameplay.States
                 ctx.ScoreManager.AddTrickPoints(winner.Team, 10);
 
             GameEvents.TrickCompleted(trick);
-            ctx.StateMachine.TransitionTo(GameStateId.CheckRoundEnd);
+
+            Debug.Log($"[Pacing] Showing trick result ({TrickResultDelay:F2}s before advancing)");
+
+            // Hold here so all 4 cards stay visible and the winner message is readable.
+            Advance(TrickResultDelay, () => ctx.StateMachine.TransitionTo(GameStateId.CheckRoundEnd));
         }
 
         public void Exit(GameContext ctx) { }
+
+        // ------------------------------------------------------------------ pacing helpers
+
+        private static float TrickResultDelay =>
+            GamePresentationController.Instance?.TrickResultDelay ?? 0f;
+
+        private static void Advance(float delay, Action action)
+        {
+            var pacing = GamePresentationController.Instance;
+            if (pacing != null && delay > 0f)
+                pacing.RunAfterDelay(delay, action);
+            else
+                action.Invoke();
+        }
     }
 }

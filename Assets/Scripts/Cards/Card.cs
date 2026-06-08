@@ -17,8 +17,35 @@ namespace Blot.Cards
         }
 
         // ------------------------------------------------------------------ points
+
+        /// <summary>
+        /// Returns the point value of this card for the given trump contract.
+        ///
+        /// NoTrump game (trump == Suit.NoTrump):
+        ///   Ace=19, Ten=10, King=4, Queen=3, Jack=2, others=0
+        ///   Total across 32 cards: 152
+        ///
+        /// Trump game:
+        ///   Trump suit: Jack=20, Nine=14, Ace=11, Ten=10, King=4, Queen=3, others=0
+        ///   Non-trump:  Ace=11, Ten=10, King=4, Queen=3, Jack=2, others=0
+        ///   Total across 32 cards: 152
+        /// </summary>
         public int GetPoints(Suit trump)
         {
+            // NoTrump game: every card uses NoTrump values regardless of suit.
+            if (trump == Suit.NoTrump)
+            {
+                return Rank switch
+                {
+                    Rank.Ace   => 19,
+                    Rank.Ten   => 10,
+                    Rank.King  => 4,
+                    Rank.Queen => 3,
+                    Rank.Jack  => 2,
+                    _          => 0   // Nine, Eight, Seven
+                };
+            }
+
             if (Suit == trump)
             {
                 return Rank switch

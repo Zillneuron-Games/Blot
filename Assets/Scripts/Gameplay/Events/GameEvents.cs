@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using Blot.Bidding;
 using Blot.Cards;
+using Blot.Declarations;
 using Blot.Gameplay.Rules;
 using Blot.Players;
 using Blot.Scoring;
@@ -34,6 +36,22 @@ namespace Blot.Gameplay.Events
         /// <summary>All players passed — round will be redealt.</summary>
         public static event Action               OnBiddingAllPassed;
 
+        // ---- declarations -------------------------------------------------
+        /// <summary>A player announced their declarations (empty list = none).</summary>
+        public static event Action<Player, List<Declaration>> OnDeclarationsAnnounced;
+        /// <summary>All players have announced; winning team is determined.</summary>
+        public static event Action<TeamId?>                   OnDeclarationWinnerDetermined;
+        /// <summary>A player confirmed their reveal.</summary>
+        public static event Action<Player, List<Declaration>> OnDeclarationsRevealed;
+
+        // ---- challenge ("I Don't Believe" / "I'm Sure") -------------------
+        /// <summary>A player challenged the opposing team's current contract.</summary>
+        public static event Action<Player>       OnChallenged;
+        /// <summary>Contract player responded to the challenge (true = I'm Sure / false = Pass).</summary>
+        public static event Action<Player, bool> OnChallengeResponded;
+        /// <summary>Challenge bonus applied to the round winner (team, bonus points).</summary>
+        public static event Action<TeamId, int>  OnChallengeBonus;
+
         // ---- Belote / Rebelote --------------------------------------------
         public static event Action<Player, BeloteEvent> OnBeloteAnnounced;
 
@@ -51,6 +69,12 @@ namespace Blot.Gameplay.Events
         public static void BidPlaced(Player p, Bid bid)          => OnBidPlaced?.Invoke(p, bid);
         public static void BiddingComplete(Player p, Bid bid)    => OnBiddingComplete?.Invoke(p, bid);
         public static void BiddingAllPassed()                    => OnBiddingAllPassed?.Invoke();
-        public static void BeloteAnnounced(Player p, BeloteEvent e) => OnBeloteAnnounced?.Invoke(p, e);
+        public static void DeclarationsAnnounced(Player p, List<Declaration> d)  => OnDeclarationsAnnounced?.Invoke(p, d);
+        public static void DeclarationWinnerDetermined(TeamId? team)             => OnDeclarationWinnerDetermined?.Invoke(team);
+        public static void DeclarationsRevealed(Player p, List<Declaration> d)  => OnDeclarationsRevealed?.Invoke(p, d);
+        public static void Challenged(Player p)                                  => OnChallenged?.Invoke(p);
+        public static void ChallengeResponded(Player p, bool isSure)            => OnChallengeResponded?.Invoke(p, isSure);
+        public static void ChallengeBonus(TeamId team, int pts)                 => OnChallengeBonus?.Invoke(team, pts);
+        public static void BeloteAnnounced(Player p, BeloteEvent e)             => OnBeloteAnnounced?.Invoke(p, e);
     }
 }

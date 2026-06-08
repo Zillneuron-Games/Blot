@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Blot.AI;
 using Blot.Cards;
 using Blot.Players;
+using UnityEngine;
+using Random = System.Random;
 
 namespace Blot.Core.Managers
 {
@@ -38,6 +41,51 @@ namespace Blot.Core.Managers
                 player.ClearHand();
                 player.AddCards(_deck.Deal(8));
             }
+
+            ValidateDealtHands();
+        }
+
+        /// <summary>
+        /// After dealing, verifies each player has exactly 8 cards and that
+        /// no (Suit, Rank) combination appears in more than one hand.
+        /// Logs errors to the Console without throwing so gameplay can continue.
+        /// </summary>
+        private void ValidateDealtHands()
+        {
+            bool hasError = false;
+            var  seen     = new HashSet<string>(32);
+
+            foreach (var player in Players)
+            {
+                if (player.Hand.Count != 8)
+                {
+                    Debug.LogError($"[Deal] Player{player.Id} ({player.Name}) has " +
+                                   $"{player.Hand.Count} cards — expected 8!");
+                    hasError = true;
+                }
+
+                foreach (var card in player.Hand)
+                {
+                    // Guard: no card should have NoTrump as its suit.
+                    if (card.Suit == Suit.NoTrump)
+                    {
+                        Debug.LogError($"[Deal] Player{player.Id} received a card with " +
+                                       $"Suit.NoTrump ({card}). Deck was built incorrectly!");
+                        hasError = true;
+                    }
+
+                    string key = $"{(int)card.Suit}_{(int)card.Rank}";
+                    if (!seen.Add(key))
+                    {
+                        Debug.LogError($"[Deal] Duplicate card across hands: {card} " +
+                                       $"already seen before Player{player.Id}'s hand!");
+                        hasError = true;
+                    }
+                }
+            }
+
+            if (!hasError)
+                Debug.Log("[Deal] Validation OK — 4 × 8 cards, all 32 unique, no NoTrump suits.");
         }
 
         public Suit SelectRandomTrump()      => (Suit)_rng.Next(0, 4);

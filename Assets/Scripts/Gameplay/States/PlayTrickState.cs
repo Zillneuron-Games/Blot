@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using Blot.Cards;
 using Blot.Core.StateMachine;
 using Blot.Gameplay.Events;
 using Blot.Gameplay.Rules;
 using Blot.Players;
+using Blot.UI;
 using UnityEngine;
 
 namespace Blot.Gameplay.States
@@ -15,6 +17,13 @@ namespace Blot.Gameplay.States
     ///   Starts with the Trick Leader (RoundManager.CurrentTrickLeader) and
     ///   proceeds clockwise.  AI responds synchronously; HumanPlayer defers
     ///   until a UI click fires OnCardChosen.
+    ///
+    /// Pacing:
+    ///   After each card is played, the next player's turn is deferred by
+    ///   <see cref="GamePresentationController.CardPlayDelay"/> seconds so the
+    ///   human can read the card before the next action.
+    ///   After the 4th card the state transitions immediately to EvaluateTrick,
+    ///   which owns the trick-result display delay.
     ///
     /// Transitions to EvaluateTrick once all four cards have been played.
     /// Also detects Belote / Rebelote and awards the bonus immediately.
@@ -89,12 +98,35 @@ namespace Blot.Gameplay.States
             GameEvents.CardPlayed(player, card);
 
             _turnIndex++;
+
             if (_turnIndex >= 4)
+            {
+                // All 4 cards played — EvaluateTrick handles the display delay.
+                Debug.Log($"[Pacing] Trick complete, transitioning to EvaluateTrick");
                 _ctx.StateMachine.TransitionTo(GameStateId.EvaluateTrick);
+            }
             else
-                RequestCurrentPlayerTurn();
+            {
+                // Pause so the human can read the card before the next player acts.
+                Debug.Log($"[Pacing] Waiting after card play ({CardPlayDelay:F2}s)");
+                Advance(CardPlayDelay, RequestCurrentPlayerTurn);
+            }
         }
 
         public void Exit(GameContext ctx) { }
+
+        // ------------------------------------------------------------------ pacing helpers
+
+        private static float CardPlayDelay =>
+            GamePresentationController.Instance?.CardPlayDelay ?? 0f;
+
+        private static void Advance(float delay, Action action)
+        {
+            var pacing = GamePresentationController.Instance;
+            if (pacing != null && delay > 0f)
+                pacing.RunAfterDelay(delay, action);
+            else
+                action.Invoke();
+        }
     }
 }

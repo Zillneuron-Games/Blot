@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Blot.Bidding;
 using Blot.Cards;
+using Blot.Declarations;
 using Blot.Gameplay;
 
 namespace Blot.Players
@@ -9,40 +10,55 @@ namespace Blot.Players
     public class HumanPlayer : Player
     {
         // ---- card selection ------------------------------------------------
-        /// <summary>
-        /// UI subscribes here to learn which cards are currently playable.
-        /// Fired every time it is this player's turn to play a card.
-        /// </summary>
         public event Action<List<Card>> OnCardSelectionRequested;
 
-        private Trick                  _pendingTrick;
-        private Suit                   _pendingTrump;
-        private IReadOnlyList<Player>  _pendingAllPlayers;
-        private bool                   _waitingForInput;
+        private Trick                 _pendingTrick;
+        private Suit                  _pendingTrump;
+        private IReadOnlyList<Player> _pendingAllPlayers;
+        private bool                  _waitingForInput;
 
         // ---- bidding -------------------------------------------------------
         /// <summary>
         /// UI subscribes here to show the bidding panel.
-        /// Provides the minimum valid bid value.
-        /// Call <see cref="TryPlaceBid"/> when the player makes a choice.
+        /// Receives minimum bid value. Check <see cref="CanChallengeNow"/> for challenge eligibility.
         /// </summary>
         public event Action<int> OnBidRequested;
 
         private bool _waitingForBid;
+        public  int  MinimumBid { get; private set; }
 
-        /// <summary>The minimum bid value accepted this turn (set by BiddingState).</summary>
-        public int MinimumBid { get; private set; }
+        /// <summary>Fallback: auto-bid randomly when no UI handler is connected.</summary>
+        public bool AutoBidFallback { get; set; } = true;
+
+        // ---- challenge response --------------------------------------------
+        /// <summary>UI subscribes here to show the "I'm Sure / Pass" response panel.</summary>
+        public event Action OnSureResponseRequested;
+
+        private bool _waitingForSureResponse;
+
+        // ---- declarations --------------------------------------------------
+        /// <summary>
+        /// UI subscribes here to show the declaration announcement panel.
+        /// The argument is all available declarations detected in this player's hand.
+        /// </summary>
+        public event Action<List<Declaration>> OnDeclareRequested;
 
         /// <summary>
-        /// When true the player auto-bids randomly if no UI handler is wired.
-        /// Set to false once a proper bidding UI is connected.
+        /// UI subscribes here to show the reveal confirmation panel.
+        /// The argument is the declarations the player announced.
         /// </summary>
-        public bool AutoBidFallback { get; set; } = true;
+        public event Action<List<Declaration>> OnRevealRequested;
+
+        private bool _waitingForDeclare;
+        private bool _waitingForReveal;
+
+        /// <summary>Fallback: auto-announce nothing and auto-confirm reveals when no UI is wired.</summary>
+        public bool AutoDeclareFallback { get; set; } = true;
 
         // ------------------------------------------------------------------ ctor
         public HumanPlayer(int id, string name, TeamId team) : base(id, name, team) { }
 
-        // ------------------------------------------------------------------ card play
+        // ================================================================== card play
 
         public override void RequestPlay(Trick currentTrick, Suit trump, IReadOnlyList<Player> allPlayers)
         {
@@ -55,10 +71,6 @@ namespace Blot.Players
             OnCardSelectionRequested?.Invoke(valid);
         }
 
-        /// <summary>
-        /// Called by the UI when the player clicks a CardView.
-        /// Returns false if the card is not in the legal set or it is not this player's turn.
-        /// </summary>
         public bool TrySelectCard(Card card)
         {
             if (!_waitingForInput) return false;
@@ -71,7 +83,7 @@ namespace Blot.Players
             return true;
         }
 
-        // ------------------------------------------------------------------ bidding
+        // ================================================================== bidding
 
         public override void RequestBid(int minimumBid)
         {
@@ -81,7 +93,6 @@ namespace Blot.Players
 
             if (AutoBidFallback)
             {
-                // Temporary fallback until bidding UI is connected.
                 Bid bid = UnityEngine.Random.value > 0.5f
                     ? null
                     : new Bid(minimumBid, (Suit)UnityEngine.Random.Range(0, 5));
@@ -89,16 +100,92 @@ namespace Blot.Players
             }
         }
 
-        /// <summary>
-        /// Called by the UI (or debug code) when the human chooses a bid.
-        /// <paramref name="bid"/> null = Pass.
-        /// Returns false if it is not currently this player's bid turn.
-        /// </summary>
         public bool TryPlaceBid(Bid bid)
         {
             if (!_waitingForBid) return false;
             _waitingForBid = false;
+            CanChallengeNow = false;
             CommitBid(bid);
+            return true;
+        }
+
+        // ================================================================== challenge response
+
+        public override void RequestSureResponse()
+        {
+            _waitingForSureResponse = true;
+            OnSureResponseRequested?.Invoke();
+
+            if (AutoBidFallback)
+            {
+                // Default: decline (Pass) — the safer auto-choice.
+                TrySureResponse(false);
+            }
+        }
+
+        /// <summary>
+        /// Called by the UI when the human responds to a challenge.
+        /// true = "I'm Sure", false = Pass.
+        /// Returns false if not currently waiting for a sure response.
+        /// </summary>
+        public bool TrySureResponse(bool isSure)
+        {
+            if (!_waitingForSureResponse) return false;
+            _waitingForSureResponse = false;
+            CommitSureResponse(isSure);
+            return true;
+        }
+
+        // ================================================================== declarations
+
+        public override void RequestDeclare(Suit trump)
+        {
+            _waitingForDeclare = true;
+
+            var available = DeclarationDetector.FindAll(Hand);
+            OnDeclareRequested?.Invoke(available);
+
+            if (AutoDeclareFallback)
+            {
+                // Default: announce nothing (safe, strategic silence).
+                TryAnnounce(new List<Declaration>());
+            }
+        }
+
+        /// <summary>
+        /// Called by the UI when the human confirms their announcement.
+        /// <paramref name="chosen"/> must be a non-overlapping subset of available declarations.
+        /// Returns false if not currently waiting for declaration input.
+        /// </summary>
+        public bool TryAnnounce(List<Declaration> chosen)
+        {
+            if (!_waitingForDeclare) return false;
+            _waitingForDeclare = false;
+            CommitDeclarations(chosen);
+            return true;
+        }
+
+        public override void RequestReveal(List<Declaration> toReveal)
+        {
+            _waitingForReveal = true;
+            OnRevealRequested?.Invoke(toReveal);
+
+            if (AutoDeclareFallback)
+            {
+                // Default: auto-confirm reveal (standard behavior).
+                TryReveal(true);
+            }
+        }
+
+        /// <summary>
+        /// Called by the UI when the human confirms or skips their reveal.
+        /// Returns false if not currently waiting for reveal input.
+        /// </summary>
+        public bool TryReveal(bool confirmed)
+        {
+            if (!_waitingForReveal) return false;
+            _waitingForReveal = false;
+            CommitReveal(confirmed);
             return true;
         }
     }
