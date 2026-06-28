@@ -19,7 +19,7 @@ namespace Blot.UI
         [SerializeField] private CardView  _cardPrefab;
         [SerializeField] private Transform _cardContainer;
 
-        private HumanPlayer            _player;
+        private HumanPlayer _player;
         private readonly List<CardView> _views = new();
 
         public void Bind(HumanPlayer player)

@@ -13,13 +13,24 @@ namespace Blot.UI
     /// </summary>
     public static class CardSpriteProvider
     {
-        private const string BasePath    = "Assets/Art/Textures/Cards/";
-        private const string BackPath    = "Assets/Art/Textures/Cards/BackCard1.png";
+        private const string SuitBasePath   = "Assets/Art/Textures/Suits/";
+        private const string CardsBasePath  = "Assets/Art/Textures/Cards/";
+        private const string CardBackPath   = "Assets/Art/Textures/Cards/BackCard1.png";
 
         public static Sprite GetSprite(Card card)
         {
 #if UNITY_EDITOR
-            string path = $"{BasePath}{SuitPrefix(card.Suit)}_{RankSuffix(card.Rank)}.png";
+            string path = $"{CardsBasePath}{SuitPrefix(card.Suit)}_{RankSuffix(card.Rank)}.png";
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+#else
+            return null;
+#endif
+        }
+
+        public static Sprite GetSprite(Suit suit)
+        {
+#if UNITY_EDITOR
+            string path = $"{SuitBasePath}icon_{SuitPrefix(suit)}.png";
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
 #else
             return null;
@@ -29,7 +40,7 @@ namespace Blot.UI
         public static Sprite GetCardBackSprite()
         {
 #if UNITY_EDITOR
-            return AssetDatabase.LoadAssetAtPath<Sprite>(BackPath);
+            return AssetDatabase.LoadAssetAtPath<Sprite>(CardBackPath);
 #else
             return null;
 #endif
@@ -43,6 +54,7 @@ namespace Blot.UI
             Suit.Diamonds => "Diamond",
             Suit.Hearts   => "Heart",
             Suit.Spades   => "Spade",
+            Suit.NoTrump  => "NoTrump",
             _             => "Club"
         };
 
